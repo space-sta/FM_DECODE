@@ -1,0 +1,31 @@
+# Local build output
+/build/
+/cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+*.o
+*.obj
+*.pdb
+*.ilk
+
+# Local editor and operating system files
+/.vs/
+/.vscode/
+*.swp
+*.swo
+*.tmp
+*.bak
+Thumbs.db
+.DS_Store
+
+# Local credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Executables generated beside source files; retain bundled dependencies
+/*.exe
+/src/*.exe
+/test/*.exe

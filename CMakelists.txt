@@ -1,0 +1,102 @@
+cmake_minimum_required(VERSION 3.10)
+project(FM_DECODE LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+find_path(FLAC_INCLUDE_DIR NAMES FLAC/stream_decoder.h)
+find_library(FLAC_LIBRARY NAMES FLAC)
+if(NOT FLAC_INCLUDE_DIR OR NOT FLAC_LIBRARY)
+    message(FATAL_ERROR "libFLAC is required. Set FLAC_INCLUDE_DIR and FLAC_LIBRARY for your compiler toolchain.")
+endif()
+
+# 设置 MATLAB 的根目录路径，请根据你的实际安装路径修改
+set(MATLAB_ROOT "E:\\Program Files\\MATLAB\\R2024b")
+
+set(INC_DIR1 ${MATLAB_ROOT}\\extern\\include)
+set(INC_DIR2 ${MATLAB_ROOT}\\extern\\include\\win64)
+set(INC_DIR3 ${CMAKE_CURRENT_SOURCE_DIR}\\test)
+set(INC_DIR ${CMAKE_CURRENT_SOURCE_DIR}\\include)
+set(SIGPACK_DIR ${CMAKE_CURRENT_SOURCE_DIR}\\sigpack-1.2.7\\sigpack)
+
+set(MAT_LINK_DIR ${MATLAB_ROOT}\\extern\\lib\\win64\\mingw64)
+set(IIO_LINK_DIR ${CMAKE_CURRENT_SOURCE_DIR}\\Windows-MinGW-W64)
+
+add_definitions(-DARMA_DONT_USE_WRAPPER -DHAVE_FFTW)
+
+# 自动生成moc文件
+set(CMAKE_AUTOMOC ON)
+
+# 查找Qt6 (如果你用的是Qt5，把Qt6改为Qt5)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Gui Charts
+    #PrintSupport
+    )
+
+# head file path，头文件目录 引入头文件目录
+include_directories(${INC_DIR1} ${INC_DIR2}) # 指定头文件的搜索路径，相当于指定 gcc 的 - I 参数
+include_directories(${INC_DIR} ${INC_DIR3} ${SIGPACK_DIR}) # 指定头文件的搜索路径，相当于指定 gcc 的 - I 参数
+
+link_directories(${MAT_LINK_DIR} ${IIO_LINK_DIR}) # 动态链接库或静态链接库的搜索路径，相当于 gcc 的 - L 参数
+
+
+# 添加可执行文件
+add_executable(${PROJECT_NAME} 
+    main.cpp
+    src/FlacSampleReader.cpp
+    include/FlacSampleReader.hpp
+    # ./src/qcustomplot.cpp 
+    # ./src/MatSave.cpp
+    ./src/utill.cpp
+    ./src/mainwindow.cpp
+    ./src/SysParams.cpp
+    ./src/RFDecode.cpp
+    ./src/fileAdress.cpp
+    ./src/resync.cpp
+    # ./src/tbc.cpp
+    ./test/Tbc.cpp
+    # ./include/qcustomplot.h
+    ./include/MatSave.hpp
+    ./include/utill.hpp
+    ./include/mainwindow.hpp
+    ./include/SysParams.hpp
+    ./include/GrayImage.hpp
+    ./include/RFDecode.hpp
+    ./include/resync.hpp
+    ./include/fileAdress.hpp
+    # ./include/tbc.hpp
+    ./test/Tbc.hpp
+    ./test/fftf.hpp
+
+    )
+
+# add_custom_command(
+#     TARGET ${PROJECT_NAME}
+#     POST_BUILD
+#     COMMAND chcp 65001
+#     COMMENT "已将虚拟终端的编码格式设为UTF-8"
+#     VERBATIM
+# )
+
+# link_libraries(libiio libfftw3) # All targets link with the same set of libs
+# link_libraries(libopenblas liblapack)
+# link_libraries(libmat.lib libmx.lib libmex.lib libeng.lib) # All targets link with the same set of libs 无法使用
+# 为 MinGW 链接指定的库文件
+# 注意这里使用的是在 mingw64 目录下的库
+target_link_libraries(${PROJECT_NAME} 
+    ${MAT_LINK_DIR}\\libmat.lib
+    ${MAT_LINK_DIR}\\libmx.lib
+    ${MAT_LINK_DIR}\\libmex.lib
+    ${MAT_LINK_DIR}\\libeng.lib
+    libiio
+    libfftw3f
+    libfftw3
+    libopenblas
+    liblapack
+    Qt6::Core
+    Qt6::Widgets
+    Qt6::Gui
+    Qt6::Charts
+    # Qt6::PrintSupport # 关键：必须链接 PrintSupport
+)
+target_include_directories(${PROJECT_NAME} PRIVATE ${FLAC_INCLUDE_DIR})
+target_link_libraries(${PROJECT_NAME} ${FLAC_LIBRARY})
